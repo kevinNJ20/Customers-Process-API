@@ -2,8 +2,12 @@
 <mule xmlns="http://www.mulesoft.org/schema/mule/core"
   xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
   xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+  xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq"
+  xmlns:http="http://www.mulesoft.org/schema/mule/http"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+      http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd
+      http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
       http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 
   <!-- GET /customers - Business Logic Flow -->
@@ -294,6 +298,97 @@ output application/json
           </ee:transform>
           <http:response statusCode="404" doc:name="HTTP Response"/>
         </on-error-propagate>
+      </error-handler>
+    </try>
+  </flow>
+
+  <!-- MQ Listener: Consume Customer Updates from Party Roles Queue -->
+  <flow name="consume-customer-update-from-mq" doc:name="consume-customer-update-from-mq">
+    <anypoint-mq:consume doc:name="Consume from Party Roles Queue" config-ref="Anypoint_MQ_Config" destination="Party Roles Queue">
+      <anypoint-mq:maximum-messages>1</anypoint-mq:maximum-messages>
+    </anypoint-mq:consume>
+    
+    <logger level="INFO" message="Received customer update from MQ: #[payload]" doc:name="Log Customer Update"/>
+    
+    <try doc:name="Try">
+      <ee:transform doc:name="Transform MQ Message to Customer Format">
+        <ee:message>
+          <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var msg = payload
+---
+{
+  globalId: null,
+  customerNumber: msg.customerNumber,
+  party: {
+    partyType: "Individual",
+    firstName: msg.firstName,
+    lastName: msg.lastName,
+    email: msg.email default null,
+    phone: msg.phone default null,
+    taxId: msg.taxId default null
+  },
+  status: msg.status default "Active",
+  externalIds: [{
+    system: "Salesforce",
+    value: msg.customerId
+  }]
+}]]></ee:set-payload>
+        </ee:message>
+      </ee:transform>
+
+      <flow-ref name="sync-customer-business-logic" doc:name="Sync Customer to All Systems"/>
+
+      <logger level="INFO" message="Successfully processed customer update from MQ" doc:name="Log Success"/>
+
+      <error-handler>
+        <on-error-continue type="ANYPOINT-MQ:CONSUME,HTTP:REQUEST" enableNotifications="true" logException="true" doc:name="Continue on Error">
+          <logger level="ERROR" message="Error processing customer update from MQ: #[error.description]" doc:name="Log Error"/>
+        </on-error-continue>
+      </error-handler>
+    </try>
+  </flow>
+
+  <!-- MQ Listener: Consume Individual Updates from Parties Queue -->
+  <flow name="consume-individual-update-from-mq" doc:name="consume-individual-update-from-mq">
+    <anypoint-mq:consume doc:name="Consume from Parties Queue" config-ref="Anypoint_MQ_Config" destination="Parties Queue">
+      <anypoint-mq:maximum-messages>1</anypoint-mq:maximum-messages>
+    </anypoint-mq:consume>
+    
+    <logger level="INFO" message="Received individual update from MQ: #[payload]" doc:name="Log Individual Update"/>
+    
+    <try doc:name="Try">
+      <ee:transform doc:name="Transform MQ Message to Party Format">
+        <ee:message>
+          <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var msg = payload
+---
+{
+  globalId: null,
+  partyType: "Individual",
+  firstName: msg.firstName,
+  lastName: msg.lastName,
+  email: msg.email default null,
+  phone: msg.phone default null,
+  externalIds: [{
+    system: "Salesforce",
+    value: msg.contactId
+  }]
+}]]></ee:set-payload>
+        </ee:message>
+      </ee:transform>
+
+      <http:request method="POST" config-ref="Global_Party_System_API_Config" path="/api/global/parties" doc:name="Upsert Party to Global Data">
+        <http:body><![CDATA[#[payload]]]></http:body>
+      </http:request>
+
+      <logger level="INFO" message="Successfully processed individual update from MQ" doc:name="Log Success"/>
+
+      <error-handler>
+        <on-error-continue type="ANYPOINT-MQ:CONSUME,HTTP:REQUEST" enableNotifications="true" logException="true" doc:name="Continue on Error">
+          <logger level="ERROR" message="Error processing individual update from MQ: #[error.description]" doc:name="Log Error"/>
+        </on-error-continue>
       </error-handler>
     </try>
   </flow>
