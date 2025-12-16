@@ -1,0 +1,95 @@
+#%RAML 1.0
+title: Customers Process API
+version: 1.0.0
+baseUri: http://localhost:8082/api/process/customers
+mediaType: application/json
+
+documentation:
+  - title: Overview
+    content: API de processus pour orchestrer la synchronisation des clients entre Core Banking, Global Data et Salesforce
+
+types:
+  Customer:
+    type: object
+    properties:
+      id?: string
+      globalId?: string
+      customerNumber?: string
+      party:
+        type: object
+        properties:
+          partyType: string
+          firstName?: string
+          lastName?: string
+          taxId?: string
+      status?: string
+  ErrorResponse:
+    type: object
+    properties:
+      error:
+        type: object
+        properties:
+          code: string
+          message: string
+
+/customers:
+  displayName: Customers
+  description: Opérations sur les clients
+  
+  get:
+    displayName: Get Customers from Global Data
+    queryParameters:
+      limit:
+        type: integer
+        required: false
+        default: 100
+      offset:
+        type: integer
+        required: false
+        default: 0
+      globalId:
+        type: string
+        required: false
+    responses:
+      200:
+        body:
+          application/json:
+            type: Customer[]
+      400:
+        body:
+          application/json:
+            type: ErrorResponse
+
+  post:
+    displayName: Sync Customer
+    description: Synchronise un client vers Global Data, Core Banking et Salesforce
+    body:
+      application/json:
+        type: Customer
+    responses:
+      200:
+        body:
+          application/json:
+            type: Customer
+      201:
+        body:
+          application/json:
+            type: Customer
+
+  /{customerGlobalId}:
+    displayName: Customer by Global ID
+    uriParameters:
+      customerGlobalId:
+        type: string
+    get:
+      displayName: Get Customer by Global ID
+      responses:
+        200:
+          body:
+            application/json:
+              type: Customer
+        404:
+          body:
+            application/json:
+              type: ErrorResponse
+

@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+  xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+  xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+      http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+  <!-- GET /customers - Business Logic Flow -->
+  <flow name="get-customers-business-logic" doc:name="get-customers-business-logic">
+    <try doc:name="Try">
+      <http:request method="GET" config-ref="Global_Party_System_API_Config" path="/api/global/parties" doc:name="Get Parties from Global Data">
+        <http:query-params><![CDATA[#[{
+          "globalId": payload.globalId default null,
+          "limit": payload.limit default "100",
+          "offset": payload.offset default "0"
+        }]]]></http:query-params>
+      </http:request>
+
+      <ee:transform doc:name="Transform to Customer Response">
+        <ee:message>
+          <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload map ((party) -> {
+  id: null,
+  globalId: party.globalId,
+  externalIds: party.externalIds default [],
+  customerNumber: null,
+  party: {
+    partyType: party.partyType,
+    firstName: party.firstName,
+    lastName: party.lastName,
+    middleName: party.middleName,
+    organizationName: party.organizationName,
+    dateOfBirth: party.dateOfBirth,
+    taxId: party.taxId
+  },
+  status: "Active",
+  createdAt: party.createdAt,
+  updatedAt: party.updatedAt
+})]]></ee:set-payload>
+        </ee:message>
+      </ee:transform>
+
+      <http:response statusCode="200" doc:name="HTTP Response"/>
+      
+      <error-handler>
+        <on-error-propagate type="HTTP:REQUEST" enableNotifications="true" logException="true" doc:name="HTTP Error">
+          <ee:transform doc:name="Transform Error">
+            <ee:message>
+              <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  error: {
+    code: "SERVICE_ERROR",
+    message: "An error occurred while fetching customers",
+    timestamp: now()
+  }
+}]]></ee:set-payload>
+            </ee:message>
+          </ee:transform>
+          <http:response statusCode="500" doc:name="HTTP Response"/>
+        </on-error-propagate>
+      </error-handler>
+    </try>
+  </flow>
+
+  <!-- POST /customers - Business Logic Flow -->
+  <flow name="sync-customer-business-logic" doc:name="sync-customer-business-logic">
+    <ee:transform doc:name="Transform to Global Party Format">
+      <ee:message>
+        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  globalId: payload.globalId default null,
+  partyType: payload.party.partyType,
+  firstName: payload.party.firstName,
+  lastName: payload.party.lastName,
+  middleName: payload.party.middleName,
+  organizationName: payload.party.organizationName,
+  dateOfBirth: payload.party.dateOfBirth,
+  taxId: payload.party.taxId,
+  externalIds: payload.externalIds default []
+}]]></ee:set-payload>
+      </ee:message>
+      <ee:variables>
+        <ee:set-variable variableName="customerData"><![CDATA[#[payload]]]></ee:set-variable>
+      </ee:variables>
+    </ee:transform>
+
+    <try doc:name="Try">
+      <parallel doc:name="Parallel Sync">
+        <http:request method="POST" config-ref="Global_Party_System_API_Config" path="/api/global/parties" doc:name="Upsert to Global Party">
+          <http:body><![CDATA[#[payload]]]></http:body>
+        </http:request>
+        
+        <ee:transform doc:name="Transform to Core Banking Format">
+          <ee:message>
+            <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var customer = vars.customerData
+---
+{
+  customerNumber: customer.customerNumber default null,
+  partyType: customer.party.partyType,
+  firstName: customer.party.firstName,
+  lastName: customer.party.lastName,
+  middleName: customer.party.middleName,
+  organizationName: customer.party.organizationName,
+  dateOfBirth: customer.party.dateOfBirth,
+  taxId: customer.party.taxId,
+  status: customer.status default "Active"
+}]]></ee:set-payload>
+          </ee:message>
+        </ee:transform>
+        <http:request method="POST" config-ref="Core_Banking_Customers_System_API_Config" path="/api/customers" doc:name="Create/Update in Core Banking">
+          <http:body><![CDATA[#[payload]]]></http:body>
+        </http:request>
+        
+        <ee:transform doc:name="Transform to Salesforce Format">
+          <ee:message>
+            <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var customer = vars.customerData
+---
+{
+  customerNumber: customer.customerNumber,
+  party: customer.party,
+  status: customer.status default "Active",
+  externalIds: customer.externalIds default []
+}]]></ee:set-payload>
+          </ee:message>
+        </ee:transform>
+        <http:request method="POST" config-ref="Salesforce_Customers_System_API_Config" path="/api/salesforce/customers" doc:name="Upsert to Salesforce">
+          <http:body><![CDATA[#[payload]]]></http:body>
+        </http:request>
+      </parallel>
+
+      <ee:transform doc:name="Aggregate Response">
+        <ee:message>
+          <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var globalParty = payload[0]
+---
+{
+  id: null,
+  globalId: globalParty.globalId,
+  externalIds: globalParty.externalIds,
+  customerNumber: vars.customerData.customerNumber,
+  party: vars.customerData.party,
+  status: vars.customerData.status default "Active"
+}]]></ee:set-payload>
+        </ee:message>
+      </ee:transform>
+
+      <http:response statusCode="200" doc:name="HTTP Response"/>
+      
+      <error-handler>
+        <on-error-propagate type="HTTP:REQUEST" enableNotifications="true" logException="true" doc:name="HTTP Error">
+          <ee:transform doc:name="Transform Error">
+            <ee:message>
+              <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  error: {
+    code: "SYNC_ERROR",
+    message: "An error occurred while syncing customer",
+    timestamp: now()
+  }
+}]]></ee:set-payload>
+            </ee:message>
+          </ee:transform>
+          <http:response statusCode="500" doc:name="HTTP Response"/>
+        </on-error-propagate>
+      </error-handler>
+    </try>
+  </flow>
+
+  <!-- GET /customers/{customerGlobalId} - Business Logic Flow -->
+  <flow name="get-customer-by-global-id-business-logic" doc:name="get-customer-by-global-id-business-logic">
+    <try doc:name="Try">
+      <http:request method="GET" config-ref="Global_Party_System_API_Config" path="/api/global/parties/{customerGlobalId}" doc:name="Get Party from Global Data">
+        <http:uri-params><![CDATA[#[{customerGlobalId: vars.customerGlobalId}]]]></http:uri-params>
+      </http:request>
+
+      <ee:transform doc:name="Transform to Customer Response">
+        <ee:message>
+          <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var party = payload
+---
+{
+  id: null,
+  globalId: party.globalId,
+  externalIds: party.externalIds default [],
+  customerNumber: null,
+  party: {
+    partyType: party.partyType,
+    firstName: party.firstName,
+    lastName: party.lastName,
+    middleName: party.middleName,
+    organizationName: party.organizationName,
+    dateOfBirth: party.dateOfBirth,
+    taxId: party.taxId
+  },
+  status: "Active",
+  createdAt: party.createdAt,
+  updatedAt: party.updatedAt
+}]]></ee:set-payload>
+        </ee:message>
+      </ee:transform>
+
+      <http:response statusCode="200" doc:name="HTTP Response"/>
+      
+      <error-handler>
+        <on-error-propagate type="HTTP:NOT_FOUND" enableNotifications="true" logException="true" doc:name="Not Found Error">
+          <ee:transform doc:name="Transform Error">
+            <ee:message>
+              <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  error: {
+    code: "NOT_FOUND",
+    message: "Customer not found",
+    timestamp: now()
+  }
+}]]></ee:set-payload>
+            </ee:message>
+          </ee:transform>
+          <http:response statusCode="404" doc:name="HTTP Response"/>
+        </on-error-propagate>
+      </error-handler>
+    </try>
+  </flow>
+
+  <!-- POST /customers/lookup - Lookup Customer by External ID -->
+  <flow name="lookup-customer-flow" doc:name="lookup-customer-flow">
+    <http:listener doc:name="POST /customers/lookup" config-ref="HTTP_Listener_config" path="/api/customers/lookup" allowedMethods="POST"/>
+    
+    <try doc:name="Try">
+      <http:request method="POST" config-ref="Global_Party_System_API_Config" path="/api/global/parties/lookup" doc:name="Lookup Party by External ID">
+        <http:body><![CDATA[#[payload]]]></http:body>
+      </http:request>
+
+      <ee:transform doc:name="Transform to Customer Response">
+        <ee:message>
+          <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var party = payload
+---
+{
+  id: null,
+  globalId: party.globalId,
+  externalIds: party.externalIds default [],
+  customerNumber: null,
+  party: {
+    partyType: party.partyType,
+    firstName: party.firstName,
+    lastName: party.lastName,
+    middleName: party.middleName,
+    organizationName: party.organizationName,
+    dateOfBirth: party.dateOfBirth,
+    taxId: party.taxId
+  },
+  status: "Active",
+  createdAt: party.createdAt,
+  updatedAt: party.updatedAt
+}]]></ee:set-payload>
+        </ee:message>
+      </ee:transform>
+
+      <http:response statusCode="200" doc:name="HTTP Response"/>
+      
+      <error-handler>
+        <on-error-propagate type="HTTP:NOT_FOUND" enableNotifications="true" logException="true" doc:name="Not Found Error">
+          <ee:transform doc:name="Transform Error">
+            <ee:message>
+              <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  error: {
+    code: "NOT_FOUND",
+    message: "Customer not found for the given external ID",
+    timestamp: now()
+  }
+}]]></ee:set-payload>
+            </ee:message>
+          </ee:transform>
+          <http:response statusCode="404" doc:name="HTTP Response"/>
+        </on-error-propagate>
+      </error-handler>
+    </try>
+  </flow>
+
+</mule>
