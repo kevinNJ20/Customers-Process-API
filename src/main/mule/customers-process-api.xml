@@ -1,11 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns="http://www.mulesoft.org/schema/mule/core"
-  xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-  xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-  xmlns:mq="http://www.mulesoft.org/schema/mule/anypoint-mq"
-  xmlns:http="http://www.mulesoft.org/schema/mule/http"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:mq="http://www.mulesoft.org/schema/mule/anypoint-mq" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
     http://www.mulesoft.org/schema/mule/core src/main/mule/mule-core-stub.xsd
     http://www.mulesoft.org/schema/mule/anypoint-mq file:///C:/kit_dev/workspace/Finetech%20%20Mock/Processes%20API/customers-process-api/src/main/mule/mule-anypoint-mq.xsd
     http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
