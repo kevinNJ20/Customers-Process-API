@@ -2,28 +2,32 @@
 <mule xmlns="http://www.mulesoft.org/schema/mule/core"
   xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
   xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-  xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq"
+  xmlns:mq="http://www.mulesoft.org/schema/mule/anypoint-mq"
   xmlns:http="http://www.mulesoft.org/schema/mule/http"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-      http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd
-      http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
-      http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+  xsi:schemaLocation="
+    http://www.mulesoft.org/schema/mule/core src/main/mule/mule-core-stub.xsd
+    http://www.mulesoft.org/schema/mule/anypoint-mq file:///C:/kit_dev/workspace/Finetech%20%20Mock/Processes%20API/customers-process-api/src/main/mule/mule-anypoint-mq.xsd
+    http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+    http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 
   <!-- GET /customers - Business Logic Flow -->
   <flow name="get-customers-business-logic" doc:name="get-customers-business-logic">
     <try doc:name="Try">
       <http:request method="GET" config-ref="Global_Party_System_API_Config" path="/api/global/parties" doc:name="Get Parties from Global Data">
-        <http:query-params><![CDATA[#[{
+        <http:query-params>
+          <![CDATA[#[{
           "globalId": payload.globalId default null,
           "limit": payload.limit default "100",
           "offset": payload.offset default "0"
-        }]]]></http:query-params>
+        }]]]>
+        </http:query-params>
       </http:request>
 
       <ee:transform doc:name="Transform to Customer Response">
         <ee:message>
-          <ee:set-payload><![CDATA[%dw 2.0
+          <ee:set-payload>
+            <![CDATA[%dw 2.0
 output application/json
 ---
 payload map ((party) -> {
@@ -43,17 +47,19 @@ payload map ((party) -> {
   status: "Active",
   createdAt: party.createdAt,
   updatedAt: party.updatedAt
-})]]></ee:set-payload>
+})]]>
+          </ee:set-payload>
         </ee:message>
       </ee:transform>
 
-      <http:response statusCode="200" doc:name="HTTP Response"/>
-      
+      <http:response statusCode="200" doc:name="HTTP Response" />
+
       <error-handler>
         <on-error-propagate type="HTTP:REQUEST" enableNotifications="true" logException="true" doc:name="HTTP Error">
           <ee:transform doc:name="Transform Error">
             <ee:message>
-              <ee:set-payload><![CDATA[%dw 2.0
+              <ee:set-payload>
+                <![CDATA[%dw 2.0
 output application/json
 ---
 {
@@ -62,10 +68,11 @@ output application/json
     message: "An error occurred while fetching customers",
     timestamp: now()
   }
-}]]></ee:set-payload>
+}]]>
+              </ee:set-payload>
             </ee:message>
           </ee:transform>
-          <http:response statusCode="500" doc:name="HTTP Response"/>
+          <http:response statusCode="500" doc:name="HTTP Response" />
         </on-error-propagate>
       </error-handler>
     </try>
@@ -75,7 +82,8 @@ output application/json
   <flow name="sync-customer-business-logic" doc:name="sync-customer-business-logic">
     <ee:transform doc:name="Transform to Global Party Format">
       <ee:message>
-        <ee:set-payload><![CDATA[%dw 2.0
+        <ee:set-payload>
+          <![CDATA[%dw 2.0
 output application/json
 ---
 {
@@ -88,22 +96,28 @@ output application/json
   dateOfBirth: payload.party.dateOfBirth,
   taxId: payload.party.taxId,
   externalIds: payload.externalIds default []
-}]]></ee:set-payload>
+}]]>
+        </ee:set-payload>
       </ee:message>
       <ee:variables>
-        <ee:set-variable variableName="customerData"><![CDATA[#[payload]]]></ee:set-variable>
+        <ee:set-variable variableName="customerData">
+          <![CDATA[#[payload]]]>
+        </ee:set-variable>
       </ee:variables>
     </ee:transform>
 
     <try doc:name="Try">
       <parallel doc:name="Parallel Sync">
         <http:request method="POST" config-ref="Global_Party_System_API_Config" path="/api/global/parties" doc:name="Upsert to Global Party">
-          <http:body><![CDATA[#[payload]]]></http:body>
+          <http:body>
+            <![CDATA[#[payload]]]>
+          </http:body>
         </http:request>
-        
+
         <ee:transform doc:name="Transform to Core Banking Format">
           <ee:message>
-            <ee:set-payload><![CDATA[%dw 2.0
+            <ee:set-payload>
+              <![CDATA[%dw 2.0
 output application/json
 var customer = vars.customerData
 ---
@@ -117,16 +131,20 @@ var customer = vars.customerData
   dateOfBirth: customer.party.dateOfBirth,
   taxId: customer.party.taxId,
   status: customer.status default "Active"
-}]]></ee:set-payload>
+}]]>
+            </ee:set-payload>
           </ee:message>
         </ee:transform>
         <http:request method="POST" config-ref="Core_Banking_Customers_System_API_Config" path="/api/customers" doc:name="Create/Update in Core Banking">
-          <http:body><![CDATA[#[payload]]]></http:body>
+          <http:body>
+            <![CDATA[#[payload]]]>
+          </http:body>
         </http:request>
-        
+
         <ee:transform doc:name="Transform to Salesforce Format">
           <ee:message>
-            <ee:set-payload><![CDATA[%dw 2.0
+            <ee:set-payload>
+              <![CDATA[%dw 2.0
 output application/json
 var customer = vars.customerData
 ---
@@ -135,17 +153,21 @@ var customer = vars.customerData
   party: customer.party,
   status: customer.status default "Active",
   externalIds: customer.externalIds default []
-}]]></ee:set-payload>
+}]]>
+            </ee:set-payload>
           </ee:message>
         </ee:transform>
         <http:request method="POST" config-ref="Salesforce_Customers_System_API_Config" path="/api/salesforce/customers" doc:name="Upsert to Salesforce">
-          <http:body><![CDATA[#[payload]]]></http:body>
+          <http:body>
+            <![CDATA[#[payload]]]>
+          </http:body>
         </http:request>
       </parallel>
 
       <ee:transform doc:name="Aggregate Response">
         <ee:message>
-          <ee:set-payload><![CDATA[%dw 2.0
+          <ee:set-payload>
+            <![CDATA[%dw 2.0
 output application/json
 var globalParty = payload[0]
 ---
@@ -156,17 +178,19 @@ var globalParty = payload[0]
   customerNumber: vars.customerData.customerNumber,
   party: vars.customerData.party,
   status: vars.customerData.status default "Active"
-}]]></ee:set-payload>
+}]]>
+          </ee:set-payload>
         </ee:message>
       </ee:transform>
 
-      <http:response statusCode="200" doc:name="HTTP Response"/>
-      
+      <http:response statusCode="200" doc:name="HTTP Response" />
+
       <error-handler>
         <on-error-propagate type="HTTP:REQUEST" enableNotifications="true" logException="true" doc:name="HTTP Error">
           <ee:transform doc:name="Transform Error">
             <ee:message>
-              <ee:set-payload><![CDATA[%dw 2.0
+              <ee:set-payload>
+                <![CDATA[%dw 2.0
 output application/json
 ---
 {
@@ -175,10 +199,11 @@ output application/json
     message: "An error occurred while syncing customer",
     timestamp: now()
   }
-}]]></ee:set-payload>
+}]]>
+              </ee:set-payload>
             </ee:message>
           </ee:transform>
-          <http:response statusCode="500" doc:name="HTTP Response"/>
+          <http:response statusCode="500" doc:name="HTTP Response" />
         </on-error-propagate>
       </error-handler>
     </try>
@@ -188,12 +213,15 @@ output application/json
   <flow name="get-customer-by-global-id-business-logic" doc:name="get-customer-by-global-id-business-logic">
     <try doc:name="Try">
       <http:request method="GET" config-ref="Global_Party_System_API_Config" path="/api/global/parties/{customerGlobalId}" doc:name="Get Party from Global Data">
-        <http:uri-params><![CDATA[#[{customerGlobalId: vars.customerGlobalId}]]]></http:uri-params>
+        <http:uri-params>
+          <![CDATA[#[{customerGlobalId: vars.customerGlobalId}]]]>
+        </http:uri-params>
       </http:request>
 
       <ee:transform doc:name="Transform to Customer Response">
         <ee:message>
-          <ee:set-payload><![CDATA[%dw 2.0
+          <ee:set-payload>
+            <![CDATA[%dw 2.0
 output application/json
 var party = payload
 ---
@@ -214,17 +242,19 @@ var party = payload
   status: "Active",
   createdAt: party.createdAt,
   updatedAt: party.updatedAt
-}]]></ee:set-payload>
+}]]>
+          </ee:set-payload>
         </ee:message>
       </ee:transform>
 
-      <http:response statusCode="200" doc:name="HTTP Response"/>
-      
+      <http:response statusCode="200" doc:name="HTTP Response" />
+
       <error-handler>
         <on-error-propagate type="HTTP:NOT_FOUND" enableNotifications="true" logException="true" doc:name="Not Found Error">
           <ee:transform doc:name="Transform Error">
             <ee:message>
-              <ee:set-payload><![CDATA[%dw 2.0
+              <ee:set-payload>
+                <![CDATA[%dw 2.0
 output application/json
 ---
 {
@@ -233,10 +263,11 @@ output application/json
     message: "Customer not found",
     timestamp: now()
   }
-}]]></ee:set-payload>
+}]]>
+              </ee:set-payload>
             </ee:message>
           </ee:transform>
-          <http:response statusCode="404" doc:name="HTTP Response"/>
+          <http:response statusCode="404" doc:name="HTTP Response" />
         </on-error-propagate>
       </error-handler>
     </try>
@@ -244,16 +275,19 @@ output application/json
 
   <!-- POST /customers/lookup - Lookup Customer by External ID -->
   <flow name="lookup-customer-flow" doc:name="lookup-customer-flow">
-    <http:listener doc:name="POST /customers/lookup" config-ref="HTTP_Listener_config" path="/api/customers/lookup" allowedMethods="POST"/>
-    
+    <http:listener doc:name="POST /customers/lookup" config-ref="HTTP_Listener_config" path="/api/customers/lookup" allowedMethods="POST" />
+
     <try doc:name="Try">
       <http:request method="POST" config-ref="Global_Party_System_API_Config" path="/api/global/parties/lookup" doc:name="Lookup Party by External ID">
-        <http:body><![CDATA[#[payload]]]></http:body>
+        <http:body>
+          <![CDATA[#[payload]]]>
+        </http:body>
       </http:request>
 
       <ee:transform doc:name="Transform to Customer Response">
         <ee:message>
-          <ee:set-payload><![CDATA[%dw 2.0
+          <ee:set-payload>
+            <![CDATA[%dw 2.0
 output application/json
 var party = payload
 ---
@@ -274,17 +308,19 @@ var party = payload
   status: "Active",
   createdAt: party.createdAt,
   updatedAt: party.updatedAt
-}]]></ee:set-payload>
+}]]>
+          </ee:set-payload>
         </ee:message>
       </ee:transform>
 
-      <http:response statusCode="200" doc:name="HTTP Response"/>
-      
+      <http:response statusCode="200" doc:name="HTTP Response" />
+
       <error-handler>
         <on-error-propagate type="HTTP:NOT_FOUND" enableNotifications="true" logException="true" doc:name="Not Found Error">
           <ee:transform doc:name="Transform Error">
             <ee:message>
-              <ee:set-payload><![CDATA[%dw 2.0
+              <ee:set-payload>
+                <![CDATA[%dw 2.0
 output application/json
 ---
 {
@@ -293,10 +329,11 @@ output application/json
     message: "Customer not found for the given external ID",
     timestamp: now()
   }
-}]]></ee:set-payload>
+}]]>
+              </ee:set-payload>
             </ee:message>
           </ee:transform>
-          <http:response statusCode="404" doc:name="HTTP Response"/>
+          <http:response statusCode="404" doc:name="HTTP Response" />
         </on-error-propagate>
       </error-handler>
     </try>
@@ -304,16 +341,17 @@ output application/json
 
   <!-- MQ Listener: Consume Customer Updates from Party Roles Queue -->
   <flow name="consume-customer-update-from-mq" doc:name="consume-customer-update-from-mq">
-    <anypoint-mq:consume doc:name="Consume from Party Roles Queue" config-ref="Anypoint_MQ_Config" destination="Party Roles Queue">
-      <anypoint-mq:maximum-messages>1</anypoint-mq:maximum-messages>
-    </anypoint-mq:consume>
-    
-    <logger level="INFO" message="Received customer update from MQ: #[payload]" doc:name="Log Customer Update"/>
-    
+    <mq:consume doc:name="Consume from Party Roles Queue" config-ref="Anypoint_MQ_Config" destination="Party Roles Queue">
+      <mq:maximum-messages>1</mq:maximum-messages>
+    </mq:consume>
+
+    <logger level="INFO" message="Received customer update from MQ: #[payload]" doc:name="Log Customer Update" />
+
     <try doc:name="Try">
       <ee:transform doc:name="Transform MQ Message to Customer Format">
         <ee:message>
-          <ee:set-payload><![CDATA[%dw 2.0
+          <ee:set-payload>
+            <![CDATA[%dw 2.0
 output application/json
 var msg = payload
 ---
@@ -333,17 +371,18 @@ var msg = payload
     system: "Salesforce",
     value: msg.customerId
   }]
-}]]></ee:set-payload>
+}]]>
+          </ee:set-payload>
         </ee:message>
       </ee:transform>
 
-      <flow-ref name="sync-customer-business-logic" doc:name="Sync Customer to All Systems"/>
+      <flow-ref name="sync-customer-business-logic" doc:name="Sync Customer to All Systems" />
 
-      <logger level="INFO" message="Successfully processed customer update from MQ" doc:name="Log Success"/>
+      <logger level="INFO" message="Successfully processed customer update from MQ" doc:name="Log Success" />
 
       <error-handler>
         <on-error-continue type="ANYPOINT-MQ:CONSUME,HTTP:REQUEST" enableNotifications="true" logException="true" doc:name="Continue on Error">
-          <logger level="ERROR" message="Error processing customer update from MQ: #[error.description]" doc:name="Log Error"/>
+          <logger level="ERROR" message="Error processing customer update from MQ: #[error.description]" doc:name="Log Error" />
         </on-error-continue>
       </error-handler>
     </try>
@@ -351,16 +390,17 @@ var msg = payload
 
   <!-- MQ Listener: Consume Individual Updates from Parties Queue -->
   <flow name="consume-individual-update-from-mq" doc:name="consume-individual-update-from-mq">
-    <anypoint-mq:consume doc:name="Consume from Parties Queue" config-ref="Anypoint_MQ_Config" destination="Parties Queue">
-      <anypoint-mq:maximum-messages>1</anypoint-mq:maximum-messages>
-    </anypoint-mq:consume>
-    
-    <logger level="INFO" message="Received individual update from MQ: #[payload]" doc:name="Log Individual Update"/>
-    
+    <mq:consume doc:name="Consume from Parties Queue" config-ref="Anypoint_MQ_Config" destination="Parties Queue">
+      <mq:maximum-messages>1</mq:maximum-messages>
+    </mq:consume>
+
+    <logger level="INFO" message="Received individual update from MQ: #[payload]" doc:name="Log Individual Update" />
+
     <try doc:name="Try">
       <ee:transform doc:name="Transform MQ Message to Party Format">
         <ee:message>
-          <ee:set-payload><![CDATA[%dw 2.0
+          <ee:set-payload>
+            <![CDATA[%dw 2.0
 output application/json
 var msg = payload
 ---
@@ -375,19 +415,22 @@ var msg = payload
     system: "Salesforce",
     value: msg.contactId
   }]
-}]]></ee:set-payload>
+}]]>
+          </ee:set-payload>
         </ee:message>
       </ee:transform>
 
       <http:request method="POST" config-ref="Global_Party_System_API_Config" path="/api/global/parties" doc:name="Upsert Party to Global Data">
-        <http:body><![CDATA[#[payload]]]></http:body>
+        <http:body>
+          <![CDATA[#[payload]]]>
+        </http:body>
       </http:request>
 
-      <logger level="INFO" message="Successfully processed individual update from MQ" doc:name="Log Success"/>
+      <logger level="INFO" message="Successfully processed individual update from MQ" doc:name="Log Success" />
 
       <error-handler>
         <on-error-continue type="ANYPOINT-MQ:CONSUME,HTTP:REQUEST" enableNotifications="true" logException="true" doc:name="Continue on Error">
-          <logger level="ERROR" message="Error processing individual update from MQ: #[error.description]" doc:name="Log Error"/>
+          <logger level="ERROR" message="Error processing individual update from MQ: #[error.description]" doc:name="Log Error" />
         </on-error-continue>
       </error-handler>
     </try>

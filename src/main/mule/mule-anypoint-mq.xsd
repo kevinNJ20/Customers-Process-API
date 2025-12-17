@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:mule="http://www.mulesoft.org/schema/mule/core"
+  targetNamespace="http://www.mulesoft.org/schema/mule/anypoint-mq"
+  xmlns="http://www.mulesoft.org/schema/mule/anypoint-mq"
+  elementFormDefault="qualified">
+
+  <!-- Import Mule core types so the connector elements can extend them -->
+  <xs:import namespace="http://www.mulesoft.org/schema/mule/core"
+    schemaLocation="https://www.mulesoft.org/schema/mule/core/current/mule.xsd"/>
+
+  <!-- Minimal Anypoint MQ config definition for lint validation -->
+  <xs:element name="config" substitutionGroup="mule:abstract-extension">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="basic-connection" minOccurs="0">
+          <xs:complexType>
+            <xs:attribute name="clientId" type="xs:string" use="required"/>
+            <xs:attribute name="clientSecret" type="xs:string" use="required"/>
+            <xs:attribute name="url" type="xs:string" use="required"/>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="name" type="xs:string" use="required"/>
+      <xs:attribute name="doc:name" type="xs:string" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- Minimal consume operation definition -->
+  <xs:element name="consume" substitutionGroup="mule:abstract-message-source">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="maximum-messages" type="xs:int" minOccurs="0"/>
+      </xs:sequence>
+      <xs:attribute name="config-ref" type="xs:string" use="required"/>
+      <xs:attribute name="destination" type="xs:string" use="required"/>
+      <xs:attribute name="doc:name" type="xs:string" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
+

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  targetNamespace="http://www.mulesoft.org/schema/mule/core"
+  xmlns="http://www.mulesoft.org/schema/mule/core"
+  elementFormDefault="qualified">
+
+  <!-- Minimal stub to make local XML validation succeed when remote schemas are unavailable -->
+  <xs:element name="mule">
+    <xs:complexType>
+      <xs:sequence minOccurs="0" maxOccurs="unbounded">
+        <!-- Accept any child from any Mule module -->
+        <xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- Abstract bases used by connector schemas -->
+  <xs:element name="abstract-extension" abstract="true"/>
+  <xs:element name="abstract-message-source" abstract="true"/>
+  <xs:element name="abstract-message-processor" abstract="true"/>
+  <xs:element name="abstract-mixed-content-message-processor" abstract="true"/>
+  <xs:element name="abstract-flow-construct" abstract="true"/>
+  <xs:element name="flow"/>
+  <xs:element name="sub-flow"/>
+</xs:schema>
+

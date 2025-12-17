@@ -38,7 +38,13 @@
       <repository>
           <id>mulesoft-releases</id>
           <name>MuleSoft Releases Repository</name>
-          <url>https://repository.mulesoft.org/releases/</url>
+          <url>https://repository.mulesoft.org/nexus/content/repositories/releases/</url>
+          <layout>default</layout>
+      </repository>
+      <repository>
+          <id>mulesoft-public</id>
+          <name>MuleSoft Public Repository</name>
+          <url>https://repository.mulesoft.org/nexus/content/repositories/public/</url>
           <layout>default</layout>
       </repository>
   </repositories>
@@ -47,7 +53,8 @@
       <id>mulesoft-releases</id>
       <name>mulesoft release repository</name>
       <layout>default</layout>
-      <url>https://repository.mulesoft.org/releases/</url>
+      <url>https://repository.mulesoft.org/nexus/content/repositories/releases/</url>
+      <url>https://repository.mulesoft.org/nexus/content/repositories/releases/</url>
       <snapshots>
           <enabled>false</enabled>
       </snapshots>
@@ -90,7 +97,7 @@
     <dependency>
       <groupId>com.mulesoft.connectors</groupId>
       <artifactId>mule-anypoint-mq-connector</artifactId>
-      <version>5.4.3</version>
+      <version>5.6.0</version>
       <classifier>mule-plugin</classifier>
     </dependency>
     
