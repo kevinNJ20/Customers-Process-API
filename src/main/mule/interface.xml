@@ -2,16 +2,16 @@
 <mule xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
       http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
       http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
-      http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+      http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd">
 
   <!-- APIkit Router Configuration -->
-  <apikit:config name="customers-process-api-config" raml="customers-process-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
 
   <!-- Main HTTP Listener with APIkit Router -->
   <flow name="main">
     <http:listener config-ref="HTTP_Listener_config" path="/api/*" doc:name="HTTP Listener" />
-    <apikit:router config-ref="customers-process-api-config" doc:name="APIkit Router" />
-    <error-handler>
+    <apikit:router doc:name="APIkit Router" doc:id="9ce13894-a7da-4c41-a6df-ba21189442af" config-ref="customers-process-api-config"/>
+		<error-handler>
       <on-error-propagate type="APIKIT:NOT_FOUND" enableNotifications="true" logException="true" doc:name="On Error Propagate">
         <ee:transform doc:name="Transform Error Response">
           <ee:message>

@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:mq="http://www.mulesoft.org/schema/mule/anypoint-mq" xsi:schemaLocation="
+<mule xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:mq="http://www.mulesoft.org/schema/mule/anypoint-mq" xsi:schemaLocation="
     http://www.mulesoft.org/schema/mule/core src/main/mule/mule-core-stub.xsd
     http://www.mulesoft.org/schema/mule/http https://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
-    http://www.mulesoft.org/schema/mule/anypoint-mq src/main/mule/mule-anypoint-mq.xsd">
+    http://www.mulesoft.org/schema/mule/anypoint-mq src/main/mule/mule-anypoint-mq.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd">
 
   <!-- Configuration Properties -->
   <configuration-properties file="config.properties" doc:name="Configuration properties" />
 
   <mq:config name="Anypoint_MQ_Config" doc:name="Anypoint MQ Config">
-    <mq:basic-connection clientId="${anypoint.mq.clientId}" clientSecret="${anypoint.mq.clientSecret}" url="${anypoint.mq.url}" />
+    <anypoint-mq:connection url="${anypoint.mq.url}" clientId="${anypoint.mq.clientId}" clientSecret="${anypoint.mq.clientSecret}" />
+		<mq:basic-connection clientId="${anypoint.mq.clientId}" clientSecret="${anypoint.mq.clientSecret}" url="${anypoint.mq.url}" />
   </mq:config>
 
   <!-- HTTP Listener Configuration -->
@@ -28,5 +31,7 @@
   <http:request-config name="Salesforce_Customers_System_API_Config" doc:name="Salesforce Customers System API Config">
     <http:request-connection host="${salesforce.customers.api.host}" port="${salesforce.customers.api.port}" />
   </http:request-config>
+	<apikit:config outboundHeadersMapName="outboundHeadersMapName" httpStatusVarName="httpStatus" doc:name="Router" doc:id="6f85371c-00d2-4c21-99c5-5eb04807d592" name="customers-process-api-config" api="customers-process-api.raml" />
+
 
 </mule>
