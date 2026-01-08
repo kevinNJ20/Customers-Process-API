@@ -341,7 +341,7 @@ output application/json
 
   <!-- MQ Listener: Consume Customer Updates from Party Roles Queue -->
   <flow name="consume-customer-update-from-mq" doc:name="consume-customer-update-from-mq">
-    <mq:consume doc:name="Consume from Party Roles Queue" config-ref="Anypoint_MQ_Config" destination="Party Roles Queue">
+    <mq:consume doc:name="Consume from Party Roles Queue" config-ref="Anypoint_MQ_Config" destination="Party-Roles-Queue">
       <mq:maximum-messages>1</mq:maximum-messages>
     </mq:consume>
 
@@ -390,7 +390,7 @@ var msg = payload
 
   <!-- MQ Listener: Consume Individual Updates from Parties Queue -->
   <flow name="consume-individual-update-from-mq" doc:name="consume-individual-update-from-mq">
-    <mq:consume doc:name="Consume from Parties Queue" config-ref="Anypoint_MQ_Config" destination="Parties Queue">
+    <mq:consume doc:name="Consume from Parties Queue" config-ref="Anypoint_MQ_Config" destination="Parties-Queue">
       <mq:maximum-messages>1</mq:maximum-messages>
     </mq:consume>
 
