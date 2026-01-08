@@ -101,7 +101,7 @@ output application/json
     </ee:transform>
 
     <try doc:name="Try">
-      <parallel doc:name="Parallel Sync">
+      <ee:parallel doc:name="Parallel Sync">
         <http:request method="POST" config-ref="Global_Party_System_API_Config" path="/api/global/parties" doc:name="Upsert to Global Party">
           <http:body>
             <![CDATA[#[payload]]]>
@@ -156,7 +156,7 @@ var customer = vars.customerData
             <![CDATA[#[payload]]]>
           </http:body>
         </http:request>
-      </parallel>
+      </ee:parallel>
 
       <ee:transform doc:name="Aggregate Response">
         <ee:message>
