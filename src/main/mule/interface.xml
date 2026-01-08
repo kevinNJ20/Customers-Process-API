@@ -29,7 +29,7 @@ output application/json
             </ee:set-payload>
           </ee:message>
         </ee:transform>
-        <http:response statusCode="404" doc:name="HTTP Response" />
+        <set-variable value="404" doc:name="httpStatus" doc:id="d3d4a356-1b30-4ea3-bf48-82e66c597694" variableName="httpStatus"/>
       </on-error-propagate>
       <on-error-propagate type="APIKIT:BAD_REQUEST" enableNotifications="true" logException="true" doc:name="On Error Propagate">
         <ee:transform doc:name="Transform Error Response">
@@ -48,7 +48,7 @@ output application/json
             </ee:set-payload>
           </ee:message>
         </ee:transform>
-        <http:response statusCode="400" doc:name="HTTP Response" />
+        <set-variable value="400" doc:name="httpStatus" doc:id="d3d4a356-1b30-4ea3-bf48-82e66c597694" variableName="httpStatus"/>
       </on-error-propagate>
       <on-error-propagate type="APIKIT:NOT_ACCEPTABLE" enableNotifications="true" logException="true" doc:name="On Error Propagate">
         <ee:transform doc:name="Transform Error Response">
@@ -67,7 +67,7 @@ output application/json
             </ee:set-payload>
           </ee:message>
         </ee:transform>
-        <http:response statusCode="406" doc:name="HTTP Response" />
+        <set-variable value="406" doc:name="httpStatus" doc:id="d3d4a356-1b30-4ea3-bf48-82e66c597694" variableName="httpStatus"/>
       </on-error-propagate>
       <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE" enableNotifications="true" logException="true" doc:name="On Error Propagate">
         <ee:transform doc:name="Transform Error Response">
@@ -86,7 +86,7 @@ output application/json
             </ee:set-payload>
           </ee:message>
         </ee:transform>
-        <http:response statusCode="415" doc:name="HTTP Response" />
+        <set-variable value="415" doc:name="httpStatus" doc:id="d3d4a356-1b30-4ea3-bf48-82e66c597694" variableName="httpStatus"/>
       </on-error-propagate>
       <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED" enableNotifications="true" logException="true" doc:name="On Error Propagate">
         <ee:transform doc:name="Transform Error Response">
@@ -105,7 +105,7 @@ output application/json
             </ee:set-payload>
           </ee:message>
         </ee:transform>
-        <http:response statusCode="405" doc:name="HTTP Response" />
+        <set-variable value="405" doc:name="httpStatus" doc:id="d3d4a356-1b30-4ea3-bf48-82e66c597694" variableName="httpStatus"/>
       </on-error-propagate>
     </error-handler>
   </flow>
