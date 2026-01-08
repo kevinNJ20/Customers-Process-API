@@ -101,16 +101,16 @@ output application/json
     </ee:transform>
 
     <try doc:name="Try">
-      <ee:scatter-gather doc:name="Scatter Gather">
-        <ee:route>
-          <http:request method="POST" config-ref="Global_Party_System_API_Config" path="/api/global/parties" doc:name="Upsert to Global Party">
+      <scatter-gather doc:name="Scatter-Gather" doc:id="b7d2bb7e-1628-451d-830b-7dd8dcca4034">
+        <route>
+          <http:request method="POST" doc:name="Upsert to Global Party" doc:id="209b1ec3-c79a-4794-9616-cb935f2a534b" config-ref="Global_Party_System_API_Config" path="/api/global/parties">
             <http:body>
               <![CDATA[#[payload]]]>
             </http:body>
           </http:request>
-        </ee:route>
+        </route>
 
-        <ee:route>
+        <route>
           <ee:transform doc:name="Transform to Core Banking Format">
             <ee:message>
               <ee:set-payload>
@@ -132,14 +132,14 @@ var customer = vars.customerData
               </ee:set-payload>
             </ee:message>
           </ee:transform>
-          <http:request method="POST" config-ref="Core_Banking_Customers_System_API_Config" path="/api/customers" doc:name="Create/Update in Core Banking">
+          <http:request method="POST" doc:name="Create/Update in Core Banking" doc:id="b8fbb0a9-aed8-4f17-9bb4-b3facb92285a" config-ref="Core_Banking_Customers_System_API_Config" path="/api/customers">
             <http:body>
               <![CDATA[#[payload]]]>
             </http:body>
           </http:request>
-        </ee:route>
+        </route>
 
-        <ee:route>
+        <route>
           <ee:transform doc:name="Transform to Salesforce Format">
             <ee:message>
               <ee:set-payload>
@@ -156,13 +156,13 @@ var customer = vars.customerData
               </ee:set-payload>
             </ee:message>
           </ee:transform>
-          <http:request method="POST" config-ref="Salesforce_Customers_System_API_Config" path="/api/salesforce/customers" doc:name="Upsert to Salesforce">
+          <http:request method="POST" doc:name="Upsert to Salesforce" doc:id="c1d2bb7e-1628-451d-830b-7dd8dcca4035" config-ref="Salesforce_Customers_System_API_Config" path="/api/salesforce/customers">
             <http:body>
               <![CDATA[#[payload]]]>
             </http:body>
           </http:request>
-        </ee:route>
-      </ee:scatter-gather>
+        </route>
+      </scatter-gather>
 
       <ee:transform doc:name="Aggregate Response">
         <ee:message>
