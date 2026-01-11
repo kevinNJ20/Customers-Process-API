@@ -31,7 +31,7 @@ http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/m
   <http:request-config name="Salesforce_Customers_System_API_Config" doc:name="Salesforce Customers System API Config">
     <http:request-connection host="${salesforce.customers.api.host}" port="${salesforce.customers.api.port}" />
   </http:request-config>
-	<apikit:config outboundHeadersMapName="outboundHeadersMapName" httpStatusVarName="httpStatus" doc:name="Router" doc:id="6f85371c-00d2-4c21-99c5-5eb04807d592" name="customers-process-api-config" api="customers-process-api.raml" />
+	<apikit:config outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" doc:name="Router" doc:id="6f85371c-00d2-4c21-99c5-5eb04807d592" name="customers-process-api-config" api="customers-process-api.raml" />
 
 
 </mule>
