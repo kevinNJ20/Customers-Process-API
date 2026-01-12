@@ -1,16 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:mq="http://www.mulesoft.org/schema/mule/anypoint-mq" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
-    http://www.mulesoft.org/schema/mule/core src/main/mule/mule-core-stub.xsd
-    http://www.mulesoft.org/schema/mule/anypoint-mq file:///C:/kit_dev/workspace/Finetech%20%20Mock/Processes%20API/customers-process-api/src/main/mule/mule-anypoint-mq.xsd
-    http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
-    http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+  xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+  xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+  xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq"
+  xmlns:http="http://www.mulesoft.org/schema/mule/http"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+  http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+  http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd
+  http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 
   <!-- GET /customers - Business Logic Flow -->
   <flow name="get-customers-business-logic" doc:name="get-customers-business-logic">
     <try doc:name="Try">
-      <http:request method="GET" config-ref="Global_Party_System_API_Config" path="/api/global/parties" doc:name="Get Parties from Global Data">
-        <http:query-params>
-          <![CDATA[#[{
+      <http:request config-ref="Global_Party_System_API_Config" path="/api/parties" doc:name="Get Parties from Global Data">
+        <http:query-params><![CDATA[#[{
           "globalId": payload.globalId default null,
           "limit": payload.limit default "100",
           "offset": payload.offset default "0"
@@ -49,7 +53,7 @@ payload map ((party) -> {
       <set-variable value="200" doc:name="httpStatus" doc:id="d3d4a356-1b30-4ea3-bf48-82e66c597694" variableName="httpStatus"/>
 
       <error-handler>
-        <on-error-propagate type="HTTP:REQUEST" enableNotifications="true" logException="true" doc:name="HTTP Error">
+        <on-error-propagate type="HTTP:CONNECTIVITY" enableNotifications="true" logException="true" doc:name="HTTP Error">
           <ee:transform doc:name="Transform Error">
             <ee:message>
               <ee:set-payload>
@@ -74,39 +78,33 @@ output application/json
 
   <!-- POST /customers - Business Logic Flow -->
   <flow name="sync-customer-business-logic" doc:name="sync-customer-business-logic">
+    <set-variable value="#[payload]" variableName="customerData" doc:name="Store Original Customer Data" />
+    
     <ee:transform doc:name="Transform to Global Party Format">
       <ee:message>
-        <ee:set-payload>
-          <![CDATA[%dw 2.0
+      <ee:set-payload>
+        <![CDATA[%dw 2.0
 output application/json
+var customer = vars.customerData
 ---
 {
-  globalId: payload.globalId default null,
-  partyType: payload.party.partyType,
-  firstName: payload.party.firstName,
-  lastName: payload.party.lastName,
-  middleName: payload.party.middleName,
-  organizationName: payload.party.organizationName,
-  dateOfBirth: payload.party.dateOfBirth,
-  taxId: payload.party.taxId,
-  externalIds: payload.externalIds default []
+  partyType: customer.party.partyType,
+  firstName: customer.party.firstName default null,
+  lastName: customer.party.lastName default null,
+  (middleName: customer.party.middleName) if customer.party.middleName != null,
+  (organizationName: customer.party.organizationName) if customer.party.organizationName != null,
+  (dateOfBirth: customer.party.dateOfBirth) if customer.party.dateOfBirth != null,
+  (taxId: customer.party.taxId) if customer.party.taxId != null,
+  externalIds: customer.externalIds default []
 }]]>
         </ee:set-payload>
       </ee:message>
-      <ee:variables>
-        <ee:set-variable variableName="customerData">
-          <![CDATA[#[payload]]]>
-        </ee:set-variable>
-      </ee:variables>
     </ee:transform>
 
     <try doc:name="Try">
       <scatter-gather doc:name="Scatter-Gather" doc:id="b7d2bb7e-1628-451d-830b-7dd8dcca4034">
         <route>
-          <http:request method="POST" doc:name="Upsert to Global Party" doc:id="209b1ec3-c79a-4794-9616-cb935f2a534b" config-ref="Global_Party_System_API_Config" path="/api/global/parties">
-            <http:body>
-              <![CDATA[#[payload]]]>
-            </http:body>
+          <http:request method="POST" doc:name="Upsert to Global Party" doc:id="209b1ec3-c79a-4794-9616-cb935f2a534b" config-ref="Global_Party_System_API_Config" path="/api/parties">
           </http:request>
         </route>
 
@@ -119,15 +117,17 @@ output application/json
 var customer = vars.customerData
 ---
 {
-  customerNumber: customer.customerNumber default null,
-  partyType: customer.party.partyType,
-  firstName: customer.party.firstName,
-  lastName: customer.party.lastName,
-  middleName: customer.party.middleName,
-  organizationName: customer.party.organizationName,
-  dateOfBirth: customer.party.dateOfBirth,
-  taxId: customer.party.taxId,
-  status: customer.status default "Active"
+  (customerNumber: customer.customerNumber) if customer.customerNumber != null,
+  party: {
+    partyType: customer.party.partyType,
+    firstName: customer.party.firstName default null,
+    lastName: customer.party.lastName default null,
+    (middleName: customer.party.middleName) if customer.party.middleName != null,
+    (organizationName: customer.party.organizationName) if customer.party.organizationName != null,
+    (dateOfBirth: customer.party.dateOfBirth) if customer.party.dateOfBirth != null,
+    (taxId: customer.party.taxId) if customer.party.taxId != null
+  },
+  (status: customer.status) if customer.status != null
 }]]>
               </ee:set-payload>
             </ee:message>
@@ -156,10 +156,7 @@ var customer = vars.customerData
               </ee:set-payload>
             </ee:message>
           </ee:transform>
-          <http:request method="POST" doc:name="Upsert to Salesforce" doc:id="c1d2bb7e-1628-451d-830b-7dd8dcca4035" config-ref="Salesforce_Customers_System_API_Config" path="/api/salesforce/customers">
-            <http:body>
-              <![CDATA[#[payload]]]>
-            </http:body>
+          <http:request method="POST" doc:name="Upsert to Salesforce" doc:id="c1d2bb7e-1628-451d-830b-7dd8dcca4035" config-ref="Salesforce_Customers_System_API_Config" path="/api/customers">
           </http:request>
         </route>
       </scatter-gather>
@@ -186,7 +183,7 @@ var globalParty = payload[0]
       <set-variable value="200" doc:name="httpStatus" doc:id="d3d4a356-1b30-4ea3-bf48-82e66c597694" variableName="httpStatus"/>
 
       <error-handler>
-        <on-error-propagate type="HTTP:REQUEST" enableNotifications="true" logException="true" doc:name="HTTP Error">
+        <on-error-propagate type="HTTP:CONNECTIVITY" enableNotifications="true" logException="true" doc:name="HTTP Error">
           <ee:transform doc:name="Transform Error">
             <ee:message>
               <ee:set-payload>
@@ -212,9 +209,8 @@ output application/json
   <!-- GET /customers/{customerGlobalId} - Business Logic Flow -->
   <flow name="get-customer-by-global-id-business-logic" doc:name="get-customer-by-global-id-business-logic">
     <try doc:name="Try">
-      <http:request method="GET" config-ref="Global_Party_System_API_Config" path="/api/global/parties/{customerGlobalId}" doc:name="Get Party from Global Data">
-        <http:uri-params>
-          <![CDATA[#[{customerGlobalId: vars.customerGlobalId}]]]>
+      <http:request config-ref="Global_Party_System_API_Config" path="/api/parties/{customerGlobalId}" doc:name="Get Party from Global Data">
+        <http:uri-params><![CDATA[#[{customerGlobalId: vars.customerGlobalId}]]]>
         </http:uri-params>
       </http:request>
 
@@ -278,10 +274,7 @@ output application/json
     <http:listener doc:name="POST /customers/lookup" config-ref="HTTP_Listener_config" path="/api/customers/lookup" allowedMethods="POST" />
 
     <try doc:name="Try">
-      <http:request method="POST" config-ref="Global_Party_System_API_Config" path="/api/global/parties/lookup" doc:name="Lookup Party by External ID">
-        <http:body>
-          <![CDATA[#[payload]]]>
-        </http:body>
+      <http:request method="POST" config-ref="Global_Party_System_API_Config" path="/api/parties/lookup" doc:name="Lookup Party by External ID">
       </http:request>
 
       <ee:transform doc:name="Transform to Customer Response">
@@ -341,9 +334,7 @@ output application/json
 
   <!-- MQ Listener: Consume Customer Updates from Party Roles Queue -->
   <flow name="consume-customer-update-from-mq" doc:name="consume-customer-update-from-mq">
-    <mq:consume doc:name="Consume from Party Roles Queue" config-ref="Anypoint_MQ_Config" destination="Party-Roles-Queue">
-      <mq:maximum-messages>1</mq:maximum-messages>
-    </mq:consume>
+    <anypoint-mq:consume doc:name="Consume from Party Roles Queue" config-ref="Anypoint_MQ_Config" destination="Party-Roles-Queue" />
 
     <logger level="INFO" message="Received customer update from MQ: #[payload]" doc:name="Log Customer Update" />
 
@@ -381,7 +372,7 @@ var msg = payload
       <logger level="INFO" message="Successfully processed customer update from MQ" doc:name="Log Success" />
 
       <error-handler>
-        <on-error-continue type="ANYPOINT-MQ:CONSUME,HTTP:REQUEST" enableNotifications="true" logException="true" doc:name="Continue on Error">
+        <on-error-continue type="ANYPOINT-MQ:CONNECTIVITY,HTTP:CONNECTIVITY" enableNotifications="true" logException="true" doc:name="Continue on Error">
           <logger level="ERROR" message="Error processing customer update from MQ: #[error.description]" doc:name="Log Error" />
         </on-error-continue>
       </error-handler>
@@ -390,9 +381,7 @@ var msg = payload
 
   <!-- MQ Listener: Consume Individual Updates from Parties Queue -->
   <flow name="consume-individual-update-from-mq" doc:name="consume-individual-update-from-mq">
-    <mq:consume doc:name="Consume from Parties Queue" config-ref="Anypoint_MQ_Config" destination="Parties-Queue">
-      <mq:maximum-messages>1</mq:maximum-messages>
-    </mq:consume>
+    <anypoint-mq:consume doc:name="Consume from Parties Queue" config-ref="Anypoint_MQ_Config" destination="Parties-Queue" />
 
     <logger level="INFO" message="Received individual update from MQ: #[payload]" doc:name="Log Individual Update" />
 
@@ -420,16 +409,13 @@ var msg = payload
         </ee:message>
       </ee:transform>
 
-      <http:request method="POST" config-ref="Global_Party_System_API_Config" path="/api/global/parties" doc:name="Upsert Party to Global Data">
-        <http:body>
-          <![CDATA[#[payload]]]>
-        </http:body>
+      <http:request method="POST" config-ref="Global_Party_System_API_Config" path="/api/parties" doc:name="Upsert Party to Global Data">
       </http:request>
 
       <logger level="INFO" message="Successfully processed individual update from MQ" doc:name="Log Success" />
 
       <error-handler>
-        <on-error-continue type="ANYPOINT-MQ:CONSUME,HTTP:REQUEST" enableNotifications="true" logException="true" doc:name="Continue on Error">
+        <on-error-continue type="ANYPOINT-MQ:CONNECTIVITY,HTTP:CONNECTIVITY" enableNotifications="true" logException="true" doc:name="Continue on Error">
           <logger level="ERROR" message="Error processing individual update from MQ: #[error.description]" doc:name="Log Error" />
         </on-error-continue>
       </error-handler>
