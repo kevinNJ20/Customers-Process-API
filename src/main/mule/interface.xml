@@ -136,7 +136,7 @@ output application/java
   </flow>
 
   <!-- POST /customers -->
-  <flow name="post:\customers:customers-process-api-config">
+  <flow name="post:\customers:application\json:customers-process-api-config">
     <flow-ref name="sync-customer-business-logic" doc:name="sync-customer-business-logic" />
   </flow>
 
@@ -144,6 +144,11 @@ output application/java
   <flow name="get:\customers\(customerGlobalId):customers-process-api-config">
     <set-variable value="#[attributes.uriParams.customerGlobalId]" variableName="customerGlobalId" doc:name="Set Customer Global ID" />
     <flow-ref name="get-customer-by-global-id-business-logic" doc:name="get-customer-by-global-id-business-logic" />
+  </flow>
+
+  <!-- POST /customers/lookup -->
+  <flow name="post:\customers\lookup:application\json:customers-process-api-config">
+    <flow-ref name="lookup-customer-business-logic" doc:name="lookup-customer-business-logic" />
   </flow>
 
   <flow name="console" doc:id="console-customers-process">

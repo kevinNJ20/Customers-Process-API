@@ -270,9 +270,7 @@ output application/json
   </flow>
 
   <!-- POST /customers/lookup - Lookup Customer by External ID -->
-  <flow name="lookup-customer-flow" doc:name="lookup-customer-flow">
-    <http:listener doc:name="POST /customers/lookup" config-ref="HTTP_Listener_config" path="/api/customers/lookup" allowedMethods="POST" />
-
+  <flow name="lookup-customer-business-logic" doc:name="lookup-customer-business-logic">
     <try doc:name="Try">
       <http:request method="POST" config-ref="Global_Party_System_API_Config" path="/api/parties/lookup" doc:name="Lookup Party by External ID">
       </http:request>

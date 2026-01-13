@@ -93,3 +93,36 @@ types:
             application/json:
               type: ErrorResponse
 
+  /lookup:
+    displayName: Lookup Customer
+    post:
+      displayName: Lookup Customer by External ID
+      description: Recherche un client par identifiant externe
+      body:
+        application/json:
+          type: object
+          properties:
+            externalId:
+              type: string
+              description: Identifiant externe du client
+            externalIdType:
+              type: string
+              description: Type d'identifiant externe
+      responses:
+        200:
+          body:
+            application/json:
+              type: Customer
+        400:
+          body:
+            application/json:
+              type: ErrorResponse
+        404:
+          body:
+            application/json:
+              type: ErrorResponse
+        500:
+          body:
+            application/json:
+              type: ErrorResponse
+
