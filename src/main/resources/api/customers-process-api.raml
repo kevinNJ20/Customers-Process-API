@@ -23,6 +23,15 @@ types:
           lastName?: string
           taxId?: string
       status?: string
+    example:
+      globalId: "c1c27e05-7e59-4f39-a7f6-7ffe9ee10d64"
+      customerNumber: "CUST-000001"
+      party:
+        partyType: "Individual"
+        firstName: "John"
+        lastName: "Doe"
+        taxId: "TAX-123456"
+      status: "Active"
   ErrorResponse:
     type: object
     properties:
@@ -31,6 +40,10 @@ types:
         properties:
           code: string
           message: string
+    example:
+      error:
+        code: "NOT_FOUND"
+        message: "Customer not found"
 
 /customers:
   displayName: Customers
@@ -66,6 +79,15 @@ types:
     body:
       application/json:
         type: Customer
+        example:
+          globalId: "c1c27e05-7e59-4f39-a7f6-7ffe9ee10d64"
+          customerNumber: "CUST-000001"
+          party:
+            partyType: "Individual"
+            firstName: "John"
+            lastName: "Doe"
+            taxId: "TAX-123456"
+          status: "Active"
     responses:
       200:
         body:
@@ -108,6 +130,9 @@ types:
             externalIdType:
               type: string
               description: Type d'identifiant externe
+          example:
+            externalId: "SF-001"
+            externalIdType: "Salesforce"
       responses:
         200:
           body:

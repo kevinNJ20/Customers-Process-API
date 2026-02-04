@@ -146,12 +146,30 @@ var customer = vars.customerData
                 <![CDATA[%dw 2.0
 output application/json
 var customer = vars.customerData
+
+// Function to map Core Banking party types to Salesforce party types
+fun mapPartyType(partyType: String) = 
+  partyType match {
+    case "Individual" -> "Person"
+    else -> partyType
+  }
 ---
 {
   customerNumber: customer.customerNumber,
-  party: customer.party,
+  party: {
+    partyType: mapPartyType(customer.party.partyType),
+    (firstName: customer.party.firstName) if customer.party.firstName != null,
+    (lastName: customer.party.lastName) if customer.party.lastName != null,
+    (middleName: customer.party.middleName) if customer.party.middleName != null,
+    (organizationName: customer.party.organizationName) if customer.party.organizationName != null,
+    (dateOfBirth: customer.party.dateOfBirth) if customer.party.dateOfBirth != null,
+    (taxId: customer.party.taxId) if customer.party.taxId != null
+  },
   status: customer.status default "Active",
-  externalIds: customer.externalIds default []
+  externalId: customer.externalId default {
+    system: "CoreBanking",
+    value: customer.globalId default customer.customerNumber
+  }
 }]]>
               </ee:set-payload>
             </ee:message>
@@ -272,6 +290,22 @@ output application/json
   <!-- POST /customers/lookup - Lookup Customer by External ID -->
   <flow name="lookup-customer-business-logic" doc:name="lookup-customer-business-logic">
     <try doc:name="Try">
+      <ee:transform doc:name="Transform to Global Party Lookup Format">
+        <ee:message>
+          <ee:set-payload>
+            <![CDATA[%dw 2.0
+output application/json
+---
+{
+  externalId: {
+    system: payload.externalIdType,
+    value: payload.externalId
+  }
+}]]>
+          </ee:set-payload>
+        </ee:message>
+      </ee:transform>
+      
       <http:request method="POST" config-ref="Global_Party_System_API_Config" path="/api/parties/lookup" doc:name="Lookup Party by External ID">
       </http:request>
 
