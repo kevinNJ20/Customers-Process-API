@@ -1,7 +1,7 @@
 #%RAML 1.0
 title: Customers Process API
 version: 1.0.0
-baseUri: http://localhost:8082/api/process/customers
+baseUri: http://localhost:8089/api
 mediaType: application/json
 
 documentation:
@@ -15,14 +15,20 @@ types:
       id?: string
       globalId?: string
       customerNumber?: string
+      externalIds?: array
       party:
         type: object
         properties:
           partyType: string
           firstName?: string
           lastName?: string
+          middleName?: string
+          organizationName?: string
+          dateOfBirth?: string
           taxId?: string
       status?: string
+      createdAt?: string
+      updatedAt?: string
   ErrorResponse:
     type: object
     properties:
@@ -83,6 +89,27 @@ types:
         type: string
     get:
       displayName: Get Customer by Global ID
+      responses:
+        200:
+          body:
+            application/json:
+              type: Customer
+        404:
+          body:
+            application/json:
+              type: ErrorResponse
+  
+  /lookup:
+    displayName: Lookup Customer by External ID
+    post:
+      displayName: Lookup Customer by External ID
+      description: Recherche un client par identifiant externe (ID Graph)
+      body:
+        application/json:
+          type: object
+          properties:
+            externalIdType: string
+            externalId: string
       responses:
         200:
           body:
