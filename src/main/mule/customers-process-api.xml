@@ -33,7 +33,7 @@ payload map ((party) -> {
   id: null,
   globalId: party.globalId,
   externalIds: party.externalIds default [],
-  customerNumber: (party.externalIds default [] filter ($.system == "CoreBanking"))[0].value default null,
+  customerNumber: ((party.externalIds default [] filter ($.system == "CoreBanking"))[0] default {}).value default null,
   party: {
     partyType: party.partyType,
     firstName: party.firstName,
@@ -51,7 +51,7 @@ payload map ((party) -> {
         </ee:message>
       </ee:transform>
 
-      <logger level="INFO" message="#['GET customers success - count: ' ++ sizeOf(payload)]" doc:name="Log success"/>
+      <logger level="INFO" message="#[output application/java --- 'GET customers success - count: ' ++ (sizeOf(payload) as String)]" doc:name="Log success"/>
       <set-variable value="200" doc:name="httpStatus" doc:id="d3d4a356-1b30-4ea3-bf48-82e66c597694" variableName="httpStatus"/>
 
       <error-handler>
@@ -250,7 +250,7 @@ var party = payload
   id: null,
   globalId: party.globalId,
   externalIds: party.externalIds default [],
-  customerNumber: (party.externalIds default [] filter ($.system == "CoreBanking"))[0].value default null,
+  customerNumber: ((party.externalIds default [] filter ($.system == "CoreBanking"))[0] default {}).value default null,
   party: {
     partyType: party.partyType,
     firstName: party.firstName,
@@ -268,7 +268,7 @@ var party = payload
         </ee:message>
       </ee:transform>
 
-      <logger level="INFO" message="#['GET customer by globalId success - customerGlobalId: ' ++ (vars.customerGlobalId default 'n/a') ++ ', customerNumber: ' ++ ((payload.externalIds default [] filter ($.system == 'CoreBanking'))[0].value default 'n/a')]" doc:name="Log success"/>
+      <logger level="INFO" message="#[output application/java --- 'GET customer by globalId success - customerGlobalId: ' ++ (vars.customerGlobalId default 'n/a') ++ ', customerNumber: ' ++ (((payload.externalIds default [] filter ($.system == 'CoreBanking'))[0] default {}).value default 'n/a')]" doc:name="Log success"/>
       <set-variable value="200" doc:name="httpStatus" doc:id="d3d4a356-1b30-4ea3-bf48-82e66c597694" variableName="httpStatus"/>
 
       <error-handler>
@@ -291,6 +291,26 @@ output application/json
             </ee:message>
           </ee:transform>
           <set-variable value="404" doc:name="httpStatus" doc:id="d3d4a356-1b30-4ea3-bf48-82e66c597694" variableName="httpStatus"/>
+        </on-error-propagate>
+        <on-error-propagate type="HTTP:INTERNAL_SERVER_ERROR,HTTP:BAD_GATEWAY" enableNotifications="true" logException="true" doc:name="HTTP 500/502 from System API">
+          <logger level="ERROR" message="#['GET customer by globalId - downstream error - customerGlobalId: ' ++ (vars.customerGlobalId default 'n/a') ++ ', error: ' ++ (error.description default 'unknown')]" doc:name="Log error"/>
+          <ee:transform doc:name="Transform Error">
+            <ee:message>
+              <ee:set-payload>
+                <![CDATA[%dw 2.0
+output application/json
+---
+{
+  error: {
+    code: "SERVICE_ERROR",
+    message: "Customer service temporarily unavailable",
+    timestamp: now()
+  }
+}]]>
+              </ee:set-payload>
+            </ee:message>
+          </ee:transform>
+          <set-variable value="500" doc:name="httpStatus" doc:id="d3d4a356-1b30-4ea3-bf48-82e66c597694" variableName="httpStatus"/>
         </on-error-propagate>
       </error-handler>
     </try>
@@ -330,7 +350,7 @@ var party = payload
   id: null,
   globalId: party.globalId,
   externalIds: party.externalIds default [],
-  customerNumber: (party.externalIds default [] filter ($.system == "CoreBanking"))[0].value default null,
+  customerNumber: ((party.externalIds default [] filter ($.system == "CoreBanking"))[0] default {}).value default null,
   party: {
     partyType: party.partyType,
     firstName: party.firstName,
