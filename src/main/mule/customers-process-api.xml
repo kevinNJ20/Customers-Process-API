@@ -398,7 +398,8 @@ output application/json
 
   <!-- MQ Listener: Consume Customer Updates from Party Roles Queue -->
   <flow name="consume-customer-update-from-mq" doc:name="consume-customer-update-from-mq">
-    <anypoint-mq:consume doc:name="Consume from Party Roles Queue" config-ref="Anypoint_MQ_Config" destination="Party-Roles-Queue" />
+    <anypoint-mq:subscriber doc:name="Subscribe To Party Roles Queue" doc:id="f65d5e3d-1c88-4188-ae8a-a20cf3298637" config-ref="Anypoint_MQ_Config" destination="Party-Roles-Queue"/>
+		<anypoint-mq:consume doc:name="Consume from Party Roles Queue" config-ref="Anypoint_MQ_Config" destination="Party-Roles-Queue" />
 
     <logger level="INFO" message="Received customer update from MQ: #[payload]" doc:name="Log Customer Update" />
 
@@ -437,7 +438,8 @@ var msg = payload
 
       <error-handler>
         <on-error-continue type="ANYPOINT-MQ:CONNECTIVITY,HTTP:CONNECTIVITY" enableNotifications="true" logException="true" doc:name="Continue on Error">
-          <logger level="ERROR" message="Error processing customer update from MQ: #[error.description]" doc:name="Log Error" />
+          <anypoint-mq:publish doc:name="Publish To DLQ" doc:id="dc34370c-526d-45da-813e-d9c10f06d53d" config-ref="Anypoint_MQ_Config" destination="Party-Roles-DLQ"/>
+					<logger level="ERROR" message="Error processing customer update from MQ: #[error.description]" doc:name="Log Error" />
         </on-error-continue>
       </error-handler>
     </try>
@@ -445,7 +447,8 @@ var msg = payload
 
   <!-- MQ Listener: Consume Individual Updates from Parties Queue -->
   <flow name="consume-individual-update-from-mq" doc:name="consume-individual-update-from-mq">
-    <anypoint-mq:consume doc:name="Consume from Parties Queue" config-ref="Anypoint_MQ_Config" destination="Parties-Queue" />
+    <anypoint-mq:subscriber doc:name="Subscribe To Parties Queue" doc:id="ebbb4857-8fb3-4351-9dff-84bc81c429e0" config-ref="Anypoint_MQ_Config" destination="Parties-Queue" />
+		<anypoint-mq:consume doc:name="Consume from Parties Queue" config-ref="Anypoint_MQ_Config" destination="Parties-Queue" />
 
     <logger level="INFO" message="Received individual update from MQ: #[payload]" doc:name="Log Individual Update" />
 
@@ -481,7 +484,9 @@ var msg = payload
       <error-handler>
         <on-error-continue type="ANYPOINT-MQ:CONNECTIVITY,HTTP:CONNECTIVITY" enableNotifications="true" logException="true" doc:name="Continue on Error">
           <logger level="ERROR" message="Error processing individual update from MQ: #[error.description]" doc:name="Log Error" />
-        </on-error-continue>
+					<anypoint-mq:publish doc:name="Publish To DLQ" doc:id="214e83dc-1c72-41b0-ac4e-6f35ae0248c2" config-ref="Anypoint_MQ_Config" destination="Parties-DLQ" />
+        
+</on-error-continue>
       </error-handler>
     </try>
   </flow>
