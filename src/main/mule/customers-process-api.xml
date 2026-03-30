@@ -146,8 +146,7 @@ var customer = vars.customerData
         <route>
           <ee:transform doc:name="Transform to Salesforce Format">
             <ee:message>
-              <ee:set-payload>
-                <![CDATA[%dw 2.0
+              <ee:set-payload><![CDATA[%dw 2.0
 output application/json
 var customer = vars.customerData
 
@@ -172,7 +171,8 @@ fun mapPartyType(partyType: String) =
   status: customer.status default "Active",
   externalId: customer.externalId default {
     system: "CoreBanking",
-    value: customer.globalId default customer.customerNumber
+    //value: customer.globalId default customer.customerNumber
+    value: customer.customerNumber
   }
 }]]>
               </ee:set-payload>
