@@ -28,7 +28,7 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
 
   <!-- HTTP Request Configuration for System APIs -->
   <http:request-config name="Global_Party_System_API_Config" doc:name="Global Party System API Config">
-    <http:request-connection host="${global.party.api.host}" port="${global.party.api.port}" protocol="HTTPS" >
+    <http:request-connection host="${global.party.api.host}" port="${global.party.api.port}" connectionIdleTimeout="12000000" protocol="HTTPS">
 			<tls:context >
 				<tls:trust-store insecure="true" />
 			</tls:context>
@@ -36,12 +36,19 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
   </http:request-config>
 
   <http:request-config name="Core_Banking_Customers_System_API_Config" doc:name="Core Banking Customers System API Config">
-    <http:request-connection host="${core.banking.customers.api.host}" port="${core.banking.customers.api.port}" connectionIdleTimeout="12000000">
+    <http:request-connection host="${core.banking.customers.api.host}" port="${core.banking.customers.api.port}" protocol="HTTPS">
+			<tls:context >
+				<tls:trust-store insecure="true" />
+			</tls:context>
 		</http:request-connection>
   </http:request-config>
 
   <http:request-config name="Salesforce_Customers_System_API_Config" doc:name="Salesforce Customers System API Config">
-    <http:request-connection host="${salesforce.customers.api.host}" port="${salesforce.customers.api.port}" protocol="HTTPS" />
+    <http:request-connection host="${salesforce.customers.api.host}" port="${salesforce.customers.api.port}" protocol="HTTPS">
+			<tls:context >
+				<tls:trust-store insecure="true" />
+			</tls:context>
+		</http:request-connection>
   </http:request-config>
 	<apikit:config outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" doc:name="Router" doc:id="6f85371c-00d2-4c21-99c5-5eb04807d592" name="customers-process-api-config" api="customers-process-api.raml" />
 
