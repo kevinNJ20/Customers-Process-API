@@ -410,7 +410,7 @@ output application/json
 var msg = payload
 ---
 {
-  globalId: msg.customerId,
+  globalId: msg.globalId,
   customerNumber: msg.customerNumber,
   party: {
     partyType: "Individual",
