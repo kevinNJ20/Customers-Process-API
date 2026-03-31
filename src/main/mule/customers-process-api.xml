@@ -86,13 +86,13 @@ output application/json
     
     <ee:transform doc:name="Transform to Global Party Format">
       <ee:message>
-      <ee:set-payload>
-        <![CDATA[%dw 2.0
+      <ee:set-payload><![CDATA[%dw 2.0
 output application/json
 var customer = vars.customerData
 ---
 {
   partyType: customer.party.partyType,
+  (globalId: customer.party.globalId) if customer.party.globalId != null,
   firstName: customer.party.firstName default null,
   lastName: customer.party.lastName default null,
   (middleName: customer.party.middleName) if customer.party.middleName != null,
@@ -405,13 +405,12 @@ output application/json
     <try doc:name="Try">
       <ee:transform doc:name="Transform MQ Message to Customer Format">
         <ee:message>
-          <ee:set-payload>
-            <![CDATA[%dw 2.0
+          <ee:set-payload><![CDATA[%dw 2.0
 output application/json
 var msg = payload
 ---
 {
-  globalId: null,
+  globalId: msg.customerId,
   customerNumber: msg.customerNumber,
   party: {
     partyType: "Individual",
