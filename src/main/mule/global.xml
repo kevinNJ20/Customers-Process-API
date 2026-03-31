@@ -36,10 +36,7 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
   </http:request-config>
 
   <http:request-config name="Core_Banking_Customers_System_API_Config" doc:name="Core Banking Customers System API Config">
-    <http:request-connection host="${core.banking.customers.api.host}" port="${core.banking.customers.api.port}" protocol="HTTPS" >
-			<tls:context >
-				<tls:trust-store insecure="true" />
-			</tls:context>
+    <http:request-connection host="${core.banking.customers.api.host}" port="${core.banking.customers.api.port}" connectionIdleTimeout="12000000">
 		</http:request-connection>
   </http:request-config>
 
