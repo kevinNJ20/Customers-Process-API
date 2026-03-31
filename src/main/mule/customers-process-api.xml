@@ -399,7 +399,6 @@ output application/json
   <!-- MQ Listener: Consume Customer Updates from Party Roles Queue -->
   <flow name="consume-customer-update-from-mq" doc:name="consume-customer-update-from-mq">
     <anypoint-mq:subscriber doc:name="Subscribe To Party Roles Queue" doc:id="f65d5e3d-1c88-4188-ae8a-a20cf3298637" config-ref="Anypoint_MQ_Config" destination="Party-Roles-Queue"/>
-		<anypoint-mq:consume doc:name="Consume from Party Roles Queue" config-ref="Anypoint_MQ_Config" destination="Party-Roles-Queue" />
 
     <logger level="INFO" message="Received customer update from MQ: #[payload]" doc:name="Log Customer Update" />
 
@@ -448,7 +447,6 @@ var msg = payload
   <!-- MQ Listener: Consume Individual Updates from Parties Queue -->
   <flow name="consume-individual-update-from-mq" doc:name="consume-individual-update-from-mq">
     <anypoint-mq:subscriber doc:name="Subscribe To Parties Queue" doc:id="ebbb4857-8fb3-4351-9dff-84bc81c429e0" config-ref="Anypoint_MQ_Config" destination="Parties-Queue" />
-		<anypoint-mq:consume doc:name="Consume from Parties Queue" config-ref="Anypoint_MQ_Config" destination="Parties-Queue" />
 
     <logger level="INFO" message="Received individual update from MQ: #[payload]" doc:name="Log Individual Update" />
 
