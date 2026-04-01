@@ -158,6 +158,7 @@ fun mapPartyType(partyType: String) =
   }
 ---
 {
+  globalId: customer.globalId default null,
   customerNumber: customer.customerNumber,
   party: {
     partyType: mapPartyType(customer.party.partyType),
@@ -171,7 +172,6 @@ fun mapPartyType(partyType: String) =
   status: customer.status default "Active",
   externalId: customer.externalId default {
     system: "CoreBanking",
-    //value: customer.globalId default customer.customerNumber
     value: customer.customerNumber
   }
 }]]>
